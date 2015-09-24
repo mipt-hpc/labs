@@ -1,20 +1,25 @@
 #import matplotlib.pyplot as plt
 #import mpl_toolkits.mplot3d.axes3d as p3
 #import matplotlib.animation as animation
+import sys
 
-dt=0.1                  #timestep for integration
-nsteps=10000            #total number of integr steps
+dt=float(sys.argv[1])                  #timestep for integration
+nsteps=int(sys.argv[2])            #total number of integr steps
 
 class Spring():         #spring F=k*dx
     def __init__(self,k,dx):
         self.k = k
         self.dx = dx
 
+
 class Particle():       #particle with mass m, position coord=[x,y,z] and velocity vel = [v_x,v_y,v_z]
     def __init__(self,coord, vel,m):
         self.coord = coord
         self.vel = vel
         self.mass = m
+    def calc_KE(self):
+        KE=0.5*self.mass*(self.vel[0]**2+self.vel[1]**2+self.vel[2]**2)
+        return KE
 
 def update(particle, spring):
     #x+=v*dt
@@ -30,6 +35,21 @@ def update(particle, spring):
     spring.dx[1]+=particle.vel[1]*dt
     spring.dx[2]+=particle.vel[2]*dt
 
+def update_verlet(particle, spring):
+
+    prev_coord_store=particle.coord[:]
+    #x+=v*dt+1/2*a*dt**2 
+    particle.coord[0] += particle.vel[0]*dt - 0.5*spring.k*particle.coord[0]/particle.mass*dt**2
+    particle.coord[1] += particle.vel[1]*dt - 0.5*spring.k*particle.coord[1]/particle.mass*dt**2
+    particle.coord[2] += particle.vel[2]*dt - 0.5*spring.k*particle.coord[2]/particle.mass*dt**2
+
+    particle.coord_prev=prev_coord_store
+    #v+=1/2*(a + a_prev)*dt
+    particle.vel[0]+=-0.5*(spring.k*particle.coord[0]/particle.mass + spring.k*particle.coord_prev[0]/particle.mass)*dt
+    particle.vel[1]+=-0.5*(spring.k*particle.coord[1]/particle.mass + spring.k*particle.coord_prev[1]/particle.mass)*dt
+    particle.vel[2]+=-0.5*(spring.k*particle.coord[2]/particle.mass + spring.k*particle.coord_prev[2]/particle.mass)*dt
+
+    spring.dx=particle.coord
 
 #data_anim=[]
 pp1=Particle([2,0,0],[-3,3,0],1)
